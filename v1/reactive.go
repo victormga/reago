@@ -8,15 +8,10 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 )
 
-type ReactiveList struct {
-	container binding.UntypedList
-}
-
-func (r *ReactiveList) Set(value []any) {
-	r.container.Set(value)
-}
+type IReactive interface{}
 
 type Reactive[T any] struct {
+	IReactive
 	container binding.DataItem
 	listeners []binding.DataListener
 }
@@ -109,7 +104,7 @@ func (reactive *Reactive[T]) Get() T {
 	return value
 }
 
-func (reactive *Reactive[T]) AddListener(callback func(T)) {
+func (reactive *Reactive[T]) OnChange(callback func(T)) {
 	listener := binding.NewDataListener(func() {
 		callback(reactive.Get())
 	})
@@ -117,9 +112,19 @@ func (reactive *Reactive[T]) AddListener(callback func(T)) {
 	reactive.container.AddListener(listener)
 }
 
-func (reactive *Reactive[T]) RemoveAllListeners(callback func(T)) {
+func (reactive *Reactive[T]) ClearListeners() {
 	for _, listener := range reactive.listeners {
 		reactive.container.RemoveListener(listener)
 	}
 	reactive.listeners = nil
 }
+
+/*
+type ReactiveList struct {
+	container binding.UntypedList
+}
+
+func (r *ReactiveList) Set(value []any) {
+	r.container.Set(value)
+}
+*/

@@ -1,8 +1,6 @@
 package reago
 
 import (
-	"encoding/xml"
-
 	"fyne.io/fyne/v2"
 )
 
@@ -30,26 +28,14 @@ func (dom *DOM) UseCallback(name string, callback func()) {
 	dom.callbacks[name] = callback
 }
 
-func (dom *DOM) LoadFile(path string) {
+func (dom *DOM) FileTemplate(path string) {
 	content := readXMLFile(path)
-	dom.LoadString(content)
+	dom.Template(content)
 }
 
-func (dom *DOM) LoadString(content string) {
+func (dom *DOM) Template(content string) {
 	dom.refs = make(map[string]fyne.CanvasObject)
-
-	var xmlRoot XMLNode
-	if err := xml.Unmarshal([]byte(content), &xmlRoot); err != nil {
-		dom.LoadString(`
-			<row>
-				<text>Error parsing XML</text>
-				<text style="bold" color="red">` + err.Error() + `</text>
-			</row>
-		`)
-		return
-	}
-
-	dom.root = *dom.parseNode(&xmlRoot)
+	dom.root = Parser.ParseXML(content, dom)
 }
 
 func (dom *DOM) AppendTo(parent *fyne.Container) {

@@ -124,6 +124,6 @@ func (window *Window) DlgModal(title string, content string) {
 	}
 
 	fragment := NewDOM()
-	fragment.LoadString(content)
+	fragment.Template(content)
 	dialog.ShowCustom(title, "Close", fragment.root, window.w)
 }
