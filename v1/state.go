@@ -6,12 +6,14 @@ import (
 )
 
 type State struct {
-	binds map[string]IReactive
+	binds     map[string]IReactive
+	callbacks map[string]func(*XMLNode)
 }
 
 func NewState() *State {
 	return &State{
-		binds: make(map[string]IReactive),
+		binds:     make(map[string]IReactive),
+		callbacks: make(map[string]func(*XMLNode)),
 	}
 }
 
@@ -20,12 +22,16 @@ func (state *State) Has(name string) bool {
 	return ok
 }
 
+func (state *State) Callback(name string, callback func(*XMLNode)) {
+	state.callbacks[name] = callback
+}
+
 func (state *State) GetBool(name string) *Reactive[bool] {
 	var bind *Reactive[bool]
 	if reactive, ok := state.binds[name]; ok {
 		bind = reactive.(*Reactive[bool])
 	} else {
-		bind = &Reactive[bool]{container: binding.NewBool()}
+		bind = NewReactive[bool](binding.NewBool())
 		state.binds[name] = bind
 	}
 	return bind
@@ -42,7 +48,7 @@ func (state *State) GetBytes(name string) *Reactive[[]byte] {
 	if reactive, ok := state.binds[name]; ok {
 		bind = reactive.(*Reactive[[]byte])
 	} else {
-		bind = &Reactive[[]byte]{container: binding.NewBytes()}
+		bind = NewReactive[[]byte](binding.NewBytes())
 		state.binds[name] = bind
 	}
 	return bind
@@ -59,7 +65,7 @@ func (state *State) GetFloat(name string) *Reactive[float64] {
 	if reactive, ok := state.binds[name]; ok {
 		bind = reactive.(*Reactive[float64])
 	} else {
-		bind = &Reactive[float64]{container: binding.NewFloat()}
+		bind = NewReactive[float64](binding.NewFloat())
 		state.binds[name] = bind
 	}
 	return bind
@@ -76,7 +82,7 @@ func (state *State) GetInt(name string) *Reactive[int] {
 	if reactive, ok := state.binds[name]; ok {
 		bind = reactive.(*Reactive[int])
 	} else {
-		bind = &Reactive[int]{container: binding.NewInt()}
+		bind = NewReactive[int](binding.NewInt())
 		state.binds[name] = bind
 	}
 	return bind
@@ -93,7 +99,7 @@ func (state *State) GetString(name string) *Reactive[string] {
 	if reactive, ok := state.binds[name]; ok {
 		bind = reactive.(*Reactive[string])
 	} else {
-		bind = &Reactive[string]{container: binding.NewString()}
+		bind = NewReactive[string](binding.NewString())
 		state.binds[name] = bind
 	}
 	return bind
@@ -110,7 +116,7 @@ func (state *State) GetURI(name string) *Reactive[fyne.URI] {
 	if reactive, ok := state.binds[name]; ok {
 		bind = reactive.(*Reactive[fyne.URI])
 	} else {
-		bind = &Reactive[fyne.URI]{container: binding.NewURI()}
+		bind = NewReactive[fyne.URI](binding.NewURI())
 		state.binds[name] = bind
 	}
 	return bind
@@ -118,6 +124,23 @@ func (state *State) GetURI(name string) *Reactive[fyne.URI] {
 
 func (state *State) URI(name string, value fyne.URI) *Reactive[fyne.URI] {
 	bind := state.GetURI(name)
+	bind.Set(value)
+	return bind
+}
+
+func (state *State) GetList(name string) *ReactiveList[any] {
+	var bind *ReactiveList[any]
+	if reactive, ok := state.binds[name]; ok {
+		bind = reactive.(*ReactiveList[any])
+	} else {
+		bind = NewReactiveList[any](binding.NewUntypedList())
+		state.binds[name] = bind
+	}
+	return bind
+}
+
+func (state *State) List(name string, value []any) *ReactiveList[any] {
+	bind := state.GetList(name)
 	bind.Set(value)
 	return bind
 }

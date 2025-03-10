@@ -14,19 +14,19 @@ import (
 
 type iParser struct {
 	tags       map[string]func(*XMLNode, *DOM) fyne.CanvasObject
-	components map[string]func(*DOM) string
+	components map[string]func(*XMLNode, *DOM) string
 }
 
 var Parser = iParser{
 	tags:       make(map[string]func(*XMLNode, *DOM) fyne.CanvasObject),
-	components: make(map[string]func(*DOM) string),
+	components: make(map[string]func(*XMLNode, *DOM) string),
 }
 
 func (parser *iParser) RegisterTag(tag string, handler func(*XMLNode, *DOM) fyne.CanvasObject) {
 	parser.tags[tag] = handler
 }
 
-func (parser *iParser) RegisterComponent(name string, component func(*DOM) string) {
+func (parser *iParser) RegisterComponent(name string, component func(*XMLNode, *DOM) string) {
 	parser.components[name] = component
 }
 
@@ -53,8 +53,8 @@ func (parser *iParser) ParseNode(node *XMLNode, target *DOM) fyne.CanvasObject {
 	tag := node.GetTag()
 	if handler, ok := parser.tags[tag]; ok {
 		obj = handler(node, target)
-	} else if gen, ok := parser.components[tag]; ok {
-		obj = parser.ParseXML(gen(target), target)
+	} else if component, ok := parser.components[tag]; ok {
+		obj = parser.ParseXML(component(node, target), target)
 	} else {
 		obj = widget.NewLabel("<unknown tag: " + tag + ">")
 	}

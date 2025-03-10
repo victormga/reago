@@ -94,8 +94,8 @@ func (node *XMLNode) BindCallback(name string, target *DOM) func() {
 	if node.HasBind(name) {
 		bind := node.GetBind(name)
 		return func() {
-			if callback, ok := target.callbacks[bind]; ok {
-				callback()
+			if callback, ok := target.state.callbacks[bind]; ok {
+				callback(node)
 			}
 		}
 	}
@@ -107,44 +107,42 @@ func (node *XMLNode) BindContent(target *DOM, update func(string)) func(string) 
 	bind := node.GetBind("content")
 
 	if bind == "" && node.HasBind("content") {
-		state := target.UseState()
-
 		tpl := NewTplParser(value)
 		for _, bind := range tpl.GetBinds() {
-			state.GetString(bind).OnChange(func(_ string) {
-				update(tpl.Render(state))
+			target.state.GetString(bind).OnChange(func(_ string) {
+				update(tpl.Render(target.state))
 			})
 		}
 
-		update(tpl.Render(state))
+		update(tpl.Render(target.state))
 		return nil
 	}
 
-	return bindToState(value, bind, target.UseState(), target.UseState().GetString, update)
+	return bindToState(value, bind, target.state, target.state.GetString, update)
 }
 
 func (node *XMLNode) BindString(name string, target *DOM, update func(string)) func(string) {
 	value := node.GetAttr(name)
 	bind := node.GetBind(name)
-	return bindToState(value, bind, target.UseState(), target.UseState().GetString, update)
+	return bindToState(value, bind, target.state, target.state.GetString, update)
 }
 
 func (node *XMLNode) BindInt(name string, target *DOM, update func(int)) func(int) {
 	value := node.GetAttrInt(name)
 	bind := node.GetBind(name)
-	return bindToState(value, bind, target.UseState(), target.UseState().GetInt, update)
+	return bindToState(value, bind, target.state, target.state.GetInt, update)
 }
 
 func (node *XMLNode) BindFloat(name string, target *DOM, update func(float64)) func(float64) {
 	value := node.GetAttrFloat(name)
 	bind := node.GetBind(name)
-	return bindToState(value, bind, target.UseState(), target.UseState().GetFloat, update)
+	return bindToState(value, bind, target.state, target.state.GetFloat, update)
 }
 
 func (node *XMLNode) BindBool(name string, target *DOM, update func(bool)) func(bool) {
 	value := node.GetAttrBool(name)
 	bind := node.GetBind(name)
-	return bindToState(value, bind, target.UseState(), target.UseState().GetBool, update)
+	return bindToState(value, bind, target.state, target.state.GetBool, update)
 }
 
 func bindToState[T comparable](
