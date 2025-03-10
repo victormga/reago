@@ -5,21 +5,27 @@ import (
 )
 
 type DOM struct {
-	root  fyne.CanvasObject
-	refs  map[string]fyne.CanvasObject
-	state *State
+	root      fyne.CanvasObject
+	refs      map[string]fyne.CanvasObject
+	state     *State
+	callbacks map[string]func(*XMLNode)
 }
 
 func NewDOM() *DOM {
 	dom := &DOM{
-		refs:  make(map[string]fyne.CanvasObject),
-		state: NewState(),
+		refs:      make(map[string]fyne.CanvasObject),
+		state:     NewState(),
+		callbacks: make(map[string]func(*XMLNode)),
 	}
 	return dom
 }
 
 func (dom *DOM) UseState() *State {
 	return dom.state
+}
+
+func (dom *DOM) UseCallback(name string, callback func(node *XMLNode)) {
+	dom.callbacks[name] = callback
 }
 
 func (dom *DOM) FileTemplate(path string) {

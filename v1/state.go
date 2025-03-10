@@ -6,24 +6,18 @@ import (
 )
 
 type State struct {
-	binds     map[string]IReactive
-	callbacks map[string]func(*XMLNode)
+	binds map[string]IReactive
 }
 
 func NewState() *State {
 	return &State{
-		binds:     make(map[string]IReactive),
-		callbacks: make(map[string]func(*XMLNode)),
+		binds: make(map[string]IReactive),
 	}
 }
 
 func (state *State) Has(name string) bool {
 	_, ok := state.binds[name]
 	return ok
-}
-
-func (state *State) Callback(name string, callback func(*XMLNode)) {
-	state.callbacks[name] = callback
 }
 
 func (state *State) GetBool(name string) *Reactive[bool] {

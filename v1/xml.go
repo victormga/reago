@@ -94,7 +94,7 @@ func (node *XMLNode) BindCallback(name string, target *DOM) func() {
 	if node.HasBind(name) {
 		bind := node.GetBind(name)
 		return func() {
-			if callback, ok := target.state.callbacks[bind]; ok {
+			if callback, ok := target.callbacks[bind]; ok {
 				callback(node)
 			}
 		}
