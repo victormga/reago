@@ -20,6 +20,17 @@ func NewDOM() *DOM {
 	return dom
 }
 
+func (dom *DOM) Clone() *DOM {
+	clone := NewDOM()
+	for name, reactive := range dom.state.binds {
+		clone.state.binds[name] = reactive // might have to clone each one?
+	}
+	for name, callback := range dom.callbacks {
+		clone.callbacks[name] = callback
+	}
+	return clone
+}
+
 func (dom *DOM) UseState() *State {
 	return dom.state
 }

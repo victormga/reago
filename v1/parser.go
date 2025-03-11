@@ -3,7 +3,9 @@ package reago
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"image/color"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -83,7 +85,7 @@ func (parser *iParser) ParseChildren(node *XMLNode, target *DOM) []fyne.CanvasOb
 	return children
 }
 
-func ParseColor(str string) (color.Color, error) {
+func (parser *iParser) ParseColor(str string) (color.Color, error) {
 	if str == "" {
 		return nil, errors.New("color is empty")
 	}
@@ -119,4 +121,35 @@ func ParseColor(str string) (color.Color, error) {
 
 		return c, nil
 	}
+}
+
+func ParseStruct[T any](input T) map[string]string {
+	result := make(map[string]string)
+
+	val := reflect.ValueOf(input)
+	typ := reflect.TypeOf(input)
+
+	// if input is a pointer, dereference it.
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+		typ = typ.Elem()
+	}
+
+	// ensure we have a struct.
+	if val.Kind() != reflect.Struct {
+		return result
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		// only include exported fields.
+		if field.PkgPath != "" {
+			continue
+		}
+
+		// convert the field value to string.
+		result[field.Name] = fmt.Sprintf("%v", val.Field(i).Interface())
+	}
+
+	return result
 }

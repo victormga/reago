@@ -14,19 +14,109 @@ func init() {
 	/** <row> */
 	Parser.RegisterTag("row", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
 		children := Parser.ParseChildren(node, dom)
-		return container.NewHBox(children...)
+		obj := container.NewHBox(children...)
+
+		top, bottom, left, right := node.GetPadding()
+		if (top > 0) || (bottom > 0) || (left > 0) || (right > 0) {
+			obj = container.New(
+				layout.NewCustomPaddedLayout(top, bottom, left, right),
+				obj,
+			)
+		}
+
+		bgc := node.GetAttr("background-color")
+		if bgc != "" {
+			color, _ := Parser.ParseColor(bgc)
+			bg := canvas.NewRectangle(color)
+			obj = container.NewStack(bg, obj)
+		}
+
+		return obj
 	})
 
 	/** <col> */
 	Parser.RegisterTag("col", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
 		children := Parser.ParseChildren(node, dom)
-		return container.NewVBox(children...)
+		obj := container.NewVBox(children...)
+
+		top, bottom, left, right := node.GetPadding()
+		if (top > 0) || (bottom > 0) || (left > 0) || (right > 0) {
+			obj = container.New(
+				layout.NewCustomPaddedLayout(top, bottom, left, right),
+				obj,
+			)
+		}
+
+		bgc := node.GetAttr("background-color")
+		if bgc != "" {
+			color, _ := Parser.ParseColor(bgc)
+			bg := canvas.NewRectangle(color)
+			obj = container.NewStack(bg, obj)
+		}
+
+		return obj
+	})
+
+	/** <flex-row> */
+	Parser.RegisterTag("flex-row", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
+		children := Parser.ParseChildren(node, dom)
+		obj := container.New(layout.NewGridLayoutWithColumns(len(children)), children...)
+
+		top, bottom, left, right := node.GetPadding()
+		if (top > 0) || (bottom > 0) || (left > 0) || (right > 0) {
+			obj = container.New(
+				layout.NewCustomPaddedLayout(top, bottom, left, right),
+				obj,
+			)
+		}
+
+		bgc := node.GetAttr("background-color")
+		if bgc != "" {
+			color, _ := Parser.ParseColor(bgc)
+			bg := canvas.NewRectangle(color)
+			obj = container.NewStack(bg, obj)
+		}
+
+		return obj
+	})
+
+	/** <flex-col> */
+	Parser.RegisterTag("flex-col", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
+		children := Parser.ParseChildren(node, dom)
+		obj := container.New(layout.NewGridLayoutWithRows(len(children)), children...)
+
+		top, bottom, left, right := node.GetPadding()
+		if (top > 0) || (bottom > 0) || (left > 0) || (right > 0) {
+			obj = container.New(
+				layout.NewCustomPaddedLayout(top, bottom, left, right),
+				obj,
+			)
+		}
+
+		bgc := node.GetAttr("background-color")
+		if bgc != "" {
+			color, _ := Parser.ParseColor(bgc)
+			bg := canvas.NewRectangle(color)
+			obj = container.NewStack(bg, obj)
+		}
+
+		return obj
 	})
 
 	/** <center> */
 	Parser.RegisterTag("center", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
 		children := Parser.ParseChildren(node, dom)
-		return container.NewCenter(children...)
+		obj := container.NewCenter(children...)
+
+		top, bottom, left, right := node.GetPadding()
+		if (top > 0) || (bottom > 0) || (left > 0) || (right > 0) {
+			obj = container.New(
+				layout.NewCustomPaddedLayout(top, bottom, left, right),
+				obj,
+			)
+		}
+
+		return obj
 	})
 
 	/** <form> */
@@ -68,55 +158,23 @@ func init() {
 		for _, child := range node.Nodes {
 			switch child.GetTag() {
 			case "layout-top":
-				top = Parser.ParseNode(&child, dom)
+				children := Parser.ParseChildren(&child, dom)
+				top = container.NewVBox(children...)
 			case "layout-bottom":
-				bottom = Parser.ParseNode(&child, dom)
+				children := Parser.ParseChildren(&child, dom)
+				bottom = container.NewVBox(children...)
 			case "layout-left":
-				left = Parser.ParseNode(&child, dom)
+				children := Parser.ParseChildren(&child, dom)
+				left = container.NewVBox(children...)
 			case "layout-right":
-				right = Parser.ParseNode(&child, dom)
+				children := Parser.ParseChildren(&child, dom)
+				right = container.NewVBox(children...)
 			default:
 				content = append(content, Parser.ParseNode(&child, dom))
 			}
 		}
 
 		return container.NewBorder(top, bottom, left, right, content...)
-	})
-
-	/** <padding> */
-	Parser.RegisterTag("padding", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
-		children := Parser.ParseChildren(node, dom)
-
-		var top, bottom, left, right float32
-		if node.HasAttr("all") {
-			all := node.GetAttrFloat32("all")
-			top, bottom, left, right = all, all, all, all
-		}
-		if node.HasAttr("vertical") {
-			vertical := node.GetAttrFloat32("vertical")
-			top, bottom = vertical, vertical
-		}
-		if node.HasAttr("horizontal") {
-			horizontal := node.GetAttrFloat32("horizontal")
-			left, right = horizontal, horizontal
-		}
-		if node.HasAttr("top") {
-			top = node.GetAttrFloat32("top")
-		}
-		if node.HasAttr("bottom") {
-			bottom = node.GetAttrFloat32("bottom")
-		}
-		if node.HasAttr("left") {
-			left = node.GetAttrFloat32("left")
-		}
-		if node.HasAttr("right") {
-			right = node.GetAttrFloat32("right")
-		}
-
-		return container.New(
-			layout.NewCustomPaddedLayout(top, bottom, left, right),
-			container.NewVBox(children...),
-		)
 	})
 
 	/** <label> */
@@ -140,7 +198,7 @@ func init() {
 		})
 
 		node.BindString("color", dom, func(value string) {
-			color, _ := ParseColor(value)
+			color, _ := Parser.ParseColor(value)
 			if color != nil {
 				obj.Color = color
 				obj.Refresh()
@@ -196,8 +254,7 @@ func init() {
 
 		icon := node.GetAttr("icon")
 		if icon != "" {
-			// TODO: this is probably wrong
-			obj = widget.NewButtonWithIcon(text, fyne.NewStaticResource(icon, nil), func() {})
+			obj = widget.NewButtonWithIcon(text, theme.Icon(fyne.ThemeIconName(icon)), func() {})
 		} else {
 			obj = widget.NewButton(text, func() {})
 		}
@@ -609,20 +666,41 @@ func init() {
 
 	/** <list> */
 	Parser.RegisterTag("list", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
-		var tpl fyne.CanvasObject
-		if len(node.Nodes) == 1 {
-			tpl = Parser.ParseNode(&node.Nodes[0], dom)
-		} else {
-			children := Parser.ParseChildren(node, dom)
-			tpl = container.NewVBox(children...)
+		if !node.HasBind("items") {
+			return widget.NewLabel("<missing bind property in list>")
 		}
 
-		return widget.NewList(
-			func() int { return 0 },
-			func() fyne.CanvasObject { return tpl },
-			func(widget.ListItemID, fyne.CanvasObject) {},
-			// TODO: /\ this is weird. this is supposed to change the item if the data changes?
+		bind := node.GetBind("items")
+
+		obj := widget.NewList(
+			func() int {
+				list := dom.UseState().GetList(bind)
+				return list.container.Length()
+			},
+			func() fyne.CanvasObject {
+				fragment := dom.Clone()
+				children := Parser.ParseChildren(node, fragment)
+				return container.NewHBox(children...)
+			},
+			func(idx widget.ListItemID, obj fyne.CanvasObject) {
+				fragment := dom.Clone()
+
+				item := dom.UseState().GetList(bind).GetValue(idx)
+				for key, value := range ParseStruct(item) {
+					fragment.UseState().String(key, value)
+				}
+
+				wrapper := obj.(*fyne.Container)
+				wrapper.Objects = Parser.ParseChildren(node, fragment)
+				wrapper.Refresh()
+			},
 		)
+
+		dom.UseState().GetList(bind).OnChange(func(_ []any) {
+			obj.Refresh()
+		})
+
+		return obj
 	})
 
 	/** <table> */

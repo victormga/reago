@@ -61,9 +61,12 @@ func (window *Window) Watch(path string, callback func(*DOM)) {
 
 	go watchFile(absPath, func(event fsnotify.Event) {
 		println("File " + path + " changed")
+
 		d = NewDOM()
 		d.FileTemplate(absPath)
 		callback(d)
+
+		window.w.SetContent(d.GetRoot())
 	})
 
 	window.Show(d)

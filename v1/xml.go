@@ -176,3 +176,34 @@ func isZero[T comparable](v T) bool {
 	var zero T
 	return v == zero
 }
+
+func (node *XMLNode) GetPadding() (float32, float32, float32, float32) {
+	var top, bottom, left, right float32
+
+	if node.HasAttr("padding") {
+		all := node.GetAttrFloat32("padding")
+		top, bottom, left, right = all, all, all, all
+	}
+	if node.HasAttr("padding-vertical") {
+		vertical := node.GetAttrFloat32("padding-vertical")
+		top, bottom = vertical, vertical
+	}
+	if node.HasAttr("padding-horizontal") {
+		horizontal := node.GetAttrFloat32("padding-horizontal")
+		left, right = horizontal, horizontal
+	}
+	if node.HasAttr("padding-top") {
+		top = node.GetAttrFloat32("padding-top")
+	}
+	if node.HasAttr("padding-bottom") {
+		bottom = node.GetAttrFloat32("padding-bottom")
+	}
+	if node.HasAttr("padding-left") {
+		left = node.GetAttrFloat32("padding-left")
+	}
+	if node.HasAttr("padding-right") {
+		right = node.GetAttrFloat32("padding-right")
+	}
+
+	return top, bottom, left, right
+}
