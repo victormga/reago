@@ -121,6 +121,18 @@ func (node *XMLNode) BindContent(target *DOM, update func(string)) func(string) 
 	return bindToState(value, bind, target.state, target.state.GetString, update)
 }
 
+func (node *XMLNode) BindList(name string, target *DOM, update func([]any)) func([]any) {
+	bind := node.GetBind(name)
+	if bind != "" {
+		reactive := target.state.GetList(bind)
+		reactive.OnChange(update)
+		update(reactive.Get())
+		return reactive.Set
+	}
+
+	return nil
+}
+
 func (node *XMLNode) BindString(name string, target *DOM, update func(string)) func(string) {
 	value := node.GetAttr(name)
 	bind := node.GetBind(name)

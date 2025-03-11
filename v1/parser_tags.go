@@ -505,17 +505,27 @@ func init() {
 
 	/** <select> */
 	Parser.RegisterTag("select", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
-		var options []string
-		for _, child := range node.Nodes {
-			if child.GetTag() == "option" {
-				label := child.GetContent()
-				options = append(options, label)
+		obj := widget.NewSelect([]string{}, func(string) {})
+
+		if node.HasBind("options") {
+			node.BindList("options", dom, func(value []any) {
+				var options []string
+				for _, v := range value {
+					options = append(options, v.(string))
+				}
+				obj.Options = options
+				obj.Refresh()
+			})
+		} else {
+			var options []string
+			for _, child := range node.Nodes {
+				if child.GetTag() == "option" {
+					label := child.GetContent()
+					options = append(options, label)
+				}
 			}
+			obj.Options = options
 		}
-
-		obj := widget.NewSelect(options, func(string) {})
-
-		// TODO: bind options?
 
 		obj.OnChanged = node.BindString("value", dom, func(value string) {
 			for _, option := range obj.Options {
@@ -539,18 +549,26 @@ func init() {
 
 	/** <combobox> */
 	Parser.RegisterTag("combobox", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
-		var options []string
-		for _, child := range node.Nodes {
-			if child.GetTag() == "option" {
-				value := child.GetContent()
-				options = append(options, value)
-				continue
+		obj := widget.NewSelectEntry([]string{})
+
+		if node.HasBind("options") {
+			node.BindList("options", dom, func(value []any) {
+				var options []string
+				for _, v := range value {
+					options = append(options, v.(string))
+				}
+				obj.SetOptions(options)
+			})
+		} else {
+			var options []string
+			for _, child := range node.Nodes {
+				if child.GetTag() == "option" {
+					label := child.GetContent()
+					options = append(options, label)
+				}
 			}
+			obj.SetOptions(options)
 		}
-
-		obj := widget.NewSelectEntry(options)
-
-		// TODO: bind options?
 
 		obj.OnChanged = node.BindString("value", dom, func(value string) {
 			obj.SetText(value)
