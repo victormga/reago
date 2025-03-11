@@ -159,16 +159,16 @@ func init() {
 
 		for _, child := range node.Nodes {
 			switch child.GetTag() {
-			case "layout-top":
+			case "top":
 				children := Parser.ParseChildren(&child, dom)
 				top = container.NewHBox(children...)
-			case "layout-bottom":
+			case "bottom":
 				children := Parser.ParseChildren(&child, dom)
 				bottom = container.NewHBox(children...)
-			case "layout-left":
+			case "left":
 				children := Parser.ParseChildren(&child, dom)
 				left = container.NewHBox(children...)
-			case "layout-right":
+			case "right":
 				children := Parser.ParseChildren(&child, dom)
 				right = container.NewHBox(children...)
 			default:
@@ -656,22 +656,16 @@ func init() {
 
 			tag := child.GetTag()
 			switch tag {
-			case "toolbar-action":
+			case "action":
 				icon := child.GetAttr("icon")
 				item = widget.NewToolbarAction(fyne.NewStaticResource(icon, nil), func() {})
-			case "toolbar-spacer":
+			case "spacer":
 				item = widget.NewToolbarSpacer()
-			case "toolbar-separator":
+			case "separator":
 				item = widget.NewToolbarSeparator()
 			}
 
 			if item != nil {
-				// TODO: make this work?
-				/*id := child.GetAttr("id")
-				if id != "" {
-					d.refs[id] = item
-				}*/
-
 				items = append(items, item)
 			}
 		}
@@ -838,8 +832,8 @@ func init() {
 		return tabs
 	})
 
-	/** <scroller> */
-	Parser.RegisterTag("scroller", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
+	/** <scroll> */
+	Parser.RegisterTag("scroll", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
 		children := Parser.ParseChildren(node, dom)
 
 		if node.GetAttr("dir") == "horizontal" {
