@@ -24,9 +24,8 @@ func init() {
 			)
 		}
 
-		bgc := node.GetAttr("background-color")
-		if bgc != "" {
-			color, _ := Parser.ParseColor(bgc)
+		color, _ := Parser.ParseColor(node.GetAttr("background-color"))
+		if color != nil {
 			bg := canvas.NewRectangle(color)
 			obj = container.NewStack(bg, obj)
 		}
@@ -47,9 +46,8 @@ func init() {
 			)
 		}
 
-		bgc := node.GetAttr("background-color")
-		if bgc != "" {
-			color, _ := Parser.ParseColor(bgc)
+		color, _ := Parser.ParseColor(node.GetAttr("background-color"))
+		if color != nil {
 			bg := canvas.NewRectangle(color)
 			obj = container.NewStack(bg, obj)
 		}
@@ -70,9 +68,8 @@ func init() {
 			)
 		}
 
-		bgc := node.GetAttr("background-color")
-		if bgc != "" {
-			color, _ := Parser.ParseColor(bgc)
+		color, _ := Parser.ParseColor(node.GetAttr("background-color"))
+		if color != nil {
 			bg := canvas.NewRectangle(color)
 			obj = container.NewStack(bg, obj)
 		}
@@ -93,13 +90,18 @@ func init() {
 			)
 		}
 
-		bgc := node.GetAttr("background-color")
-		if bgc != "" {
-			color, _ := Parser.ParseColor(bgc)
+		color, _ := Parser.ParseColor(node.GetAttr("background-color"))
+		if color != nil {
 			bg := canvas.NewRectangle(color)
 			obj = container.NewStack(bg, obj)
 		}
 
+		return obj
+	})
+
+	Parser.RegisterTag("stack", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
+		children := Parser.ParseChildren(node, dom)
+		obj := container.NewStack(children...)
 		return obj
 	})
 
@@ -159,16 +161,16 @@ func init() {
 			switch child.GetTag() {
 			case "layout-top":
 				children := Parser.ParseChildren(&child, dom)
-				top = container.NewVBox(children...)
+				top = container.NewHBox(children...)
 			case "layout-bottom":
 				children := Parser.ParseChildren(&child, dom)
-				bottom = container.NewVBox(children...)
+				bottom = container.NewHBox(children...)
 			case "layout-left":
 				children := Parser.ParseChildren(&child, dom)
-				left = container.NewVBox(children...)
+				left = container.NewHBox(children...)
 			case "layout-right":
 				children := Parser.ParseChildren(&child, dom)
-				right = container.NewVBox(children...)
+				right = container.NewHBox(children...)
 			default:
 				content = append(content, Parser.ParseNode(&child, dom))
 			}
@@ -248,22 +250,18 @@ func init() {
 
 	/** <button> */
 	Parser.RegisterTag("button", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
-		text := node.GetContent()
+		obj := widget.NewButtonWithIcon("", nil, func() {})
 
-		var obj *widget.Button
+		obj.OnTapped = node.BindCallback("click", dom)
 
-		icon := node.GetAttr("icon")
-		if icon != "" {
-			obj = widget.NewButtonWithIcon(text, theme.Icon(fyne.ThemeIconName(icon)), func() {})
-		} else {
-			obj = widget.NewButton(text, func() {})
-		}
+		node.BindString("icon", dom, func(value string) {
+			obj.Icon = theme.Icon(fyne.ThemeIconName(value))
+			obj.Refresh()
+		})
 
 		node.BindContent(dom, func(value string) {
 			obj.SetText(value)
 		})
-
-		obj.OnTapped = node.BindCallback("click", dom)
 
 		node.BindBool("disabled", dom, func(value bool) {
 			if value {
@@ -312,8 +310,7 @@ func init() {
 			}
 		})
 
-		// TODO:
-		//entry.OnSubmitted = func(string) {}
+		//entry.OnSubmitted = node.BindCallback("submit", dom)
 
 		if node.HasAttr("validation") {
 			msg := node.GetAttr("validation-message")
@@ -428,7 +425,7 @@ func init() {
 	/** <card> */
 	Parser.RegisterTag("card", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
 		children := Parser.ParseChildren(node, dom)
-		wrapper := container.NewVBox(children...)
+		wrapper := container.NewHBox(children...)
 
 		obj := widget.NewCard("", "", wrapper)
 
@@ -830,7 +827,7 @@ func init() {
 		if node.GetAttr("dir") == "horizontal" {
 			return container.NewHScroll(container.NewHBox(children...))
 		} else {
-			return container.NewVScroll(container.NewVBox(children...))
+			return container.NewVScroll(container.NewHBox(children...))
 		}
 	})
 
@@ -866,5 +863,96 @@ func init() {
 		}
 
 		return split
+	})
+
+	Parser.RegisterTag("circle", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
+		obj := canvas.NewCircle(theme.Color(theme.ColorNameForeground))
+
+		node.BindString("background-color", dom, func(value string) {
+			color, _ := Parser.ParseColor(value)
+			if color != nil {
+				obj.FillColor = color
+			}
+		})
+
+		node.BindString("border-color", dom, func(value string) {
+			color, _ := Parser.ParseColor(value)
+			if color != nil {
+				obj.StrokeColor = color
+			}
+		})
+
+		node.BindFloat("border-size", dom, func(value float64) {
+			obj.StrokeWidth = float32(value)
+		})
+
+		node.BindFloat("size", dom, func(value float64) {
+			obj.Resize(fyne.NewSize(float32(value), float32(value)))
+		})
+
+		return obj
+	})
+
+	Parser.RegisterTag("img", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
+		obj := canvas.NewImageFromResource(nil)
+
+		node.BindString("src", dom, func(value string) {
+			obj.Resource = fyne.NewStaticResource(value, nil)
+			obj.Refresh()
+		})
+
+		node.BindFloat("width", dom, func(value float64) {
+			obj.Resize(fyne.NewSize(float32(value), obj.Size().Height))
+		})
+
+		node.BindFloat("height", dom, func(value float64) {
+			obj.Resize(fyne.NewSize(obj.Size().Width, float32(value)))
+		})
+
+		node.BindString("fill", dom, func(value string) {
+			switch value {
+			case "contain":
+				obj.FillMode = canvas.ImageFillContain
+			case "stretch":
+				obj.FillMode = canvas.ImageFillStretch
+			default:
+				obj.FillMode = canvas.ImageFillOriginal
+			}
+			obj.Refresh()
+		})
+
+		return obj
+	})
+
+	Parser.RegisterTag("gradient", func(node *XMLNode, dom *DOM) fyne.CanvasObject {
+		var obj *canvas.LinearGradient
+
+		dir := node.GetAttr("direction")
+		switch dir {
+		case "vertical":
+			obj = canvas.NewHorizontalGradient(theme.Color(theme.ColorNameForeground), theme.Color(theme.ColorNameBackground))
+		default:
+			obj = canvas.NewVerticalGradient(theme.Color(theme.ColorNameForeground), theme.Color(theme.ColorNameBackground))
+		}
+
+		node.BindString("start", dom, func(value string) {
+			color, _ := Parser.ParseColor(value)
+			if color != nil {
+				obj.StartColor = color
+			}
+		})
+
+		node.BindString("end", dom, func(value string) {
+			color, _ := Parser.ParseColor(value)
+			if color != nil {
+				obj.EndColor = color
+			}
+		})
+
+		node.BindFloat("angle", dom, func(value float64) {
+			obj.Angle = value
+		})
+
+		return obj
 	})
 }
