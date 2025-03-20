@@ -1,13 +1,8 @@
 package reago
 
 import (
-	"log"
-	"os"
-	"path/filepath"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"github.com/fsnotify/fsnotify"
 )
 
 var mainApp fyne.App = nil
@@ -139,72 +134,4 @@ func (window *Window) GetMenuItem(id string) *fyne.MenuItem {
 
 func (window *Window) MainMenu() *fyne.MainMenu {
 	return window.w.MainMenu()
-}
-
-func (window *Window) Watch(path string, callback func(*DOM)) {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	d := NewDOM()
-	d.FileTemplate(absPath)
-	callback(d)
-
-	go watchFile(absPath, func(event fsnotify.Event) {
-		println("File " + path + " changed")
-
-		d = NewDOM()
-		d.FileTemplate(absPath)
-		callback(d)
-
-		window.w.SetContent(d.GetRoot())
-	})
-
-	window.Show(d)
-}
-
-func readXMLFile(path string) string {
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	return string(bytes)
-}
-
-func watchFile(filename string, callback func(event fsnotify.Event)) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer watcher.Close()
-
-	// Watch the directory that contains the file.
-	dir := filepath.Dir(filename)
-	err = watcher.Add(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for {
-		select {
-		case event, ok := <-watcher.Events:
-			if !ok {
-				return
-			}
-			// Compare absolute paths to ensure a match.
-			eventPath, err := filepath.Abs(event.Name)
-			if err != nil {
-				continue
-			}
-			if eventPath == filename {
-				callback(event)
-			}
-		case err, ok := <-watcher.Errors:
-			if !ok {
-				return
-			}
-			log.Println("Watcher error:", err)
-		}
-	}
 }
